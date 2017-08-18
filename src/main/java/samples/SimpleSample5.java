@@ -50,7 +50,7 @@ public class SimpleSample5 {
         obs.flatMap(id -> {
                     log("flatMap"); // on main thread
                     return someOtherService.getUserSessionInfo(id)
-                                           .subscribeOn(schedulerA)
+                                           .subscribeOn(schedulerA) // will thread starvation happen? (since we have only 10 threads in the pool)
                                            .toObservable(); // forking
                 }
         ).subscribe(
