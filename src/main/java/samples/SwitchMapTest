@@ -1,0 +1,87 @@
+package samples;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import rx.Observable;
+import rx.Scheduler;
+import rx.schedulers.Schedulers;
+
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
+
+import static java.util.concurrent.Executors.newFixedThreadPool;
+
+public class SwitchMapTest {
+
+    private static ExecutorService poolC = newFixedThreadPool(10, threadFactory("Sched-C-%d"));
+    public static Scheduler schedulerC = Schedulers.from(poolC);
+
+    static long before = System.currentTimeMillis();
+
+    public static void main(String[] args) {
+
+        log("Starting");
+        final Observable<String> obs = getSimpleData();
+        log("Created");
+
+        obs
+//        .flatMap(x -> 
+//            longOperation(x).subscribeOn(schedulerC)
+//        )
+        .switchMap(x ->                                   // comment switchMap, uncomment the flatMap to see the difference
+            longOperation(x).subscribeOn(schedulerC)
+        )
+        .subscribe(
+            x -> log("Got " + x),
+            Throwable::printStackTrace,
+            () -> log("Completed")
+        );;
+
+    }
+
+    public static Observable<String> longOperation(String input) {
+        return Observable.fromCallable( () ->
+            {
+                log("Going to emmit: " + input);
+                long gotToWait = waitForRandomSeconds(input);
+                log("Emitted (" + input + ") in " + gotToWait + " milliseconds");
+                return input + " processed";
+            }
+        );
+    }
+
+    static public Observable<String> getSimpleData() {
+        return Observable.create( subscriber -> {
+            log("Subscribed");
+            subscriber.onNext("A");
+            subscriber.onNext("B");
+            subscriber.onCompleted();
+        });
+    }
+
+    public static long waitForRandomSeconds(String value) {
+        try {
+            long delay = ( new Random().nextInt(2) + 1) * 1000; // 1 or 2 second
+            log("Sleep for " + delay/1000 + " seconds for "  + value);
+            Thread.sleep(delay);
+            return delay;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    static void log(String line) {
+        System.out.println(
+            System.currentTimeMillis() - before + " | " +
+                Thread.currentThread().getName()    + " | " +
+                line
+        );
+    }
+
+    static private ThreadFactory threadFactory(String pattern) {
+        // uses google guava builder
+        return new ThreadFactoryBuilder().setNameFormat(pattern).build();
+    }
+
+}
