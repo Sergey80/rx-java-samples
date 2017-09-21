@@ -85,3 +85,17 @@ public class SwitchMapTest {
     }
 
 }
+
+/*
+0 | main | Starting
+84 | main | Created
+103 | main | Subscribed
+118 | Sched-C-0 | Going to emmit: A
+119 | Sched-C-1 | Going to emmit: B
+119 | Sched-C-0 | Sleep for 1 seconds for A
+119 | Sched-C-1 | Sleep for 2 seconds for B
+1123 | Sched-C-0 | Emitted (A) in 1000 milliseconds
+2122 | Sched-C-1 | Emitted (B) in 2000 milliseconds
+2128 | Sched-C-1 | Got B processed
+2128 | Sched-C-1 | Completed
+*/
